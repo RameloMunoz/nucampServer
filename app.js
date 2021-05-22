@@ -3,6 +3,8 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const passport = require('passport');
+const authenticate = require('./authenticate');
 const session = require('express-session');
 const FileStore = require('session-file-store')(session);
 
@@ -30,6 +32,8 @@ connect.then(() => console.log('Connected correctly to server'),
 
 var app = express();
 
+
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -46,40 +50,34 @@ app.use(session({
   store: new FileStore()
 }));
 
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use('/', indexRouter);
 app.use('/users', userRouter);
 
 function auth(req, res, next) {
-    console.log("== auth routine, req.body ==",  req.body);  
-    console.log("== session ==", req.session);
+    console.log(req.user);
 
-    if (!req.session.user) {
-        const err = new Error('You are not authenticated!');
+    if (!req.user) {
+        const err = new Error('You are not authenticated!');                    
         err.status = 401;
         return next(err);
     } else {
-        if (req.session.user === 'authenticated') {
-            return next();
-        } else {
-            const err = new Error('You are not authenticated!');
-            err.status = 401;
-            return next(err);
-        }
+        return next();
     }
 }
 
 app.use(auth);
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
-
-
-
 
 app.use('/campsites', campsiteRouter);
 app.use('/promotions', promotionRouter);
 app.use('/partners', partnerRouter);
+
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'jade');
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
