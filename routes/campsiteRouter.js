@@ -9,6 +9,7 @@ campsiteRouter.route('/')
 .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
 .get(cors.cors, (req, res, next) => {
     console.log('===campsiteRouter ===');
+    console.log('=== req ===', req.user);
 
     Campsite.find()
     .populate('comments.author')
